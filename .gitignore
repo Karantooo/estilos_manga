@@ -2,3 +2,4 @@ images/
 *.webp
 models/
 .venv/
+.pdm-python

@@ -1,0 +1,25 @@
+[project]
+name = "estilos-manga"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "Carlos Álvarez (Karantooo)",email = "ctomasalvarezn@gmail.com"},
+]
+dependencies = [
+    "numpy==2.5.1",
+    "onnxruntime-gpu==1.23.2",
+    "pandas==3.0.3",
+    "pillow==12.3.0",
+    "tqdm==4.69.0",
+    "huggingface-hub==1.24.0",
+    "nvidia-cublas-cu12==12.9.2.10",
+    "nvidia-cuda-runtime-cu12==12.9.79",
+    "nvidia-cudnn-cu12==9.25.0.15",
+]
+requires-python = "==3.12.*"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
