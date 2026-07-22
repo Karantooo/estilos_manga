@@ -1,3 +1,4 @@
 [submodule "external/manga-panel-extractor"]
 	path = external/manga-panel-extractor
 	url = https://github.com/adenzu/Manga-Panel-Extractor
+	ignore = dirty

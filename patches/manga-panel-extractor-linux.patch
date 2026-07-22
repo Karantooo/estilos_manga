@@ -1,0 +1,74 @@
+diff --git a/src/image_processing/model.py b/src/image_processing/model.py
+index 2ba9b9b..9300665 100644
+--- a/src/image_processing/model.py
++++ b/src/image_processing/model.py
+@@ -1,10 +1,21 @@
++from pathlib import Path
++
+ from PyQt6.QtCore import QThread, pyqtSignal
+ 
++
++MODEL_PATH = (
++    Path(__file__).resolve().parents[1]
++    / "ai-models"
++    / "2024-11-00"
++    / "best.pt"
++)
++
++
+ class Model:
+     def __init__(self):
+         self.model = None
+         self.imported = False
+-    
++
+     def load(self):
+         if self.model is None:
+             self.__load()
+@@ -12,24 +23,35 @@ class Model:
+     def __load(self):
+         if not self.imported:
+             self.imported = True
+-            import torch
++            import os
+             import pathlib
+             import sys
+-            import os
+-            from myutils.respath import resource_path
++
++            import torch
+ 
+         # Redirect sys.stderr to a file or a valid stream
+         if sys.stderr is None:
+-            sys.stderr = open(os.devnull, 'w')
++            sys.stderr = open(os.devnull, "w")
++
++        original_windows_path = pathlib.WindowsPath
++
++        try:
++            pathlib.WindowsPath = pathlib.PosixPath
++
++            self.model = torch.hub.load(
++                "ultralytics/yolov5",
++                "custom",
++                path=str(MODEL_PATH),
++                trust_repo=True,
++            )
++        finally:
++            pathlib.WindowsPath = original_windows_path
+ 
+-        temp = pathlib.PosixPath
+-        pathlib.PosixPath = pathlib.WindowsPath
+-        self.model = torch.hub.load('ultralytics/yolov5', 'custom', path=resource_path('src/ai-models/2024-11-00/best.pt'))
+-        pathlib.PosixPath = temp
+-    
+     def __call__(self, *args, **kwds):
+         if self.model is None:
+             self.__load()
++
+         return self.model(*args, **kwds)
+ 
+-model = Model()
++
++model = Model()
+\ No newline at end of file
