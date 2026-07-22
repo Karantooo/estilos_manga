@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from time import perf_counter
 
 import numpy as np
 import onnxruntime as ort
 import pandas as pd
 from PIL import Image
 from tqdm import tqdm
+
+ort.preload_dlls(directory="")
 
 
 IMAGE_EXTENSIONS = {
@@ -261,11 +264,15 @@ def main() -> None:
     print(f"Providers disponibles: {ort.get_available_providers()}")
     print(f"Providers utilizados: {providers}")
 
+    start = perf_counter()
+
     session = ort.InferenceSession(
         str(model_path),
         providers=providers,
     )
 
+    print(f"Creación de sesión: {perf_counter() - start:.3f} s")
+    print(f"Providers activos: {session.get_providers()}")    
     input_info = session.get_inputs()[0]
     input_name = input_info.name
     input_shape = input_info.shape
@@ -285,14 +292,24 @@ def main() -> None:
     print(f"Resolución de entrada: {image_size}x{image_size}")
     print(f"Imágenes encontradas: {len(images)}")
 
+    total_start = perf_counter()
+
     for image_path in tqdm(images, desc="Generando captions"):
         try:
-            input_tensor = load_image(image_path, image_size)
+            image_start = perf_counter()
 
+            load_start = perf_counter()
+            input_tensor = load_image(image_path, image_size)
+            load_time = perf_counter() - load_start
+
+            inference_start = perf_counter()
             outputs = session.run(
                 None,
                 {input_name: input_tensor},
             )
+            inference_time = perf_counter() - inference_start
+
+            postprocess_start = perf_counter()
 
             probabilities = outputs[0][0]
 
@@ -321,10 +338,23 @@ def main() -> None:
                 encoding="utf-8",
             )
 
-        except Exception as error:
-            print(f"\nError procesando {image_path}: {error}")
+            postprocess_time = perf_counter() - postprocess_start
+            image_time = perf_counter() - image_start
 
-    print("Proceso terminado.")
+            tqdm.write(
+                f"{image_path.name}: "
+                f"carga={load_time:.4f}s | "
+                f"inferencia={inference_time:.4f}s | "
+                f"postproceso={postprocess_time:.4f}s | "
+                f"total={image_time:.4f}s"
+            )
+
+        except Exception as error:
+            tqdm.write(f"Error procesando {image_path}: {error}")
+
+    total_time = perf_counter() - total_start
+
+    print(f"Proceso terminado en {total_time:.4f} segundos.")
 
 
 if __name__ == "__main__":
